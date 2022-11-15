@@ -1,0 +1,25 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: true
+      matrix:
+        php: ['7.4', '8.0', 8.1 ]
+
+    name: Runtime ${{ matrix.php }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build --tag ghcr.io/sitepilot/runtime:${{ matrix.php }} --build-arg PHP_VERSION=${{ matrix.php }} .
