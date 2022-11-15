@@ -1,0 +1,26 @@
+#!/command/with-contenv bash
+
+CONTAINER_USER_ID=${CONTAINER_USER_ID:-1000}
+CONTAINER_GROUP_ID=${CONTAINER_GROUP_ID:-1000}
+CONTAINER_WORKDIR=${CONTAINER_WORKDIR:-"/var/www/html"}
+
+if [[ $CONTAINER_USER_ID != 1000 || $CONTAINER_GROUP_ID != 1000 ]]; then
+    # Change the group ID
+    groupmod -o -g "$CONTAINER_GROUP_ID" webgroup
+
+    # Change the User ID
+    usermod -o -u "$CONTAINER_USER_ID" webuser
+
+    # Make sure the home directory is updated with the proper UID & GID
+    chown webuser:webgroup $CONTAINER_WORKDIR
+fi
+
+echo "
+-------------------------------------
+Container Info
+-------------------------------------
+User ID:     $(id -u webuser)
+Group ID:    $(id -g webuser)
+Powered By:  sitepilot.io
+-------------------------------------
+"

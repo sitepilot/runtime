@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: '8.1'
+    ports:
+      - 8080:80
