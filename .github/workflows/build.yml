@@ -23,3 +23,15 @@ jobs:
 
       - name: Build image
         run: docker build --tag ghcr.io/sitepilot/runtime:${{ matrix.php }} --build-arg PHP_VERSION=${{ matrix.php }} .
+
+      - name: Log in to registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        if: github.ref == 'refs/heads/main'
+
+      - name: Publish image
+        run: docker push ghcr.io/sitepilot/runtime:${{ matrix.php }}
+        if: github.ref == 'refs/heads/main'
