@@ -1,29 +1,35 @@
 FROM ubuntu:22.04
 
-ARG CONTAINER_USER_ID=1000
-ARG CONTAINER_GROUP_ID=1000
-ARG CONTAINER_WORKDIR=/var/www/html
+# Build args
+ARG RUNTIME_UID=1000
+ARG RUNTIME_GID=1000
+ARG RUNTIME_WORKDIR=/www/app
+ARG RUNTIME_USERDIR=/home/app
 
 ARG PHP_VERSION='8.0'
-ARG S6_OVERLAY_VERSION=3.1.2.1
+ARG S6_OVERLAY_VERSION='3.1.2.1'
 
-ENV DEBIAN_FRONTEND=noninteractive \
+# Environment
+ENV RUNTIME_UID=${RUNTIME_UID} \
+    RUNTIME_GID=${RUNTIME_GID} \
+    RUNTIME_WORKDIR=${RUNTIME_WORKDIR} \
+    RUNTIME_USERDIR=${RUNTIME_USERDIR} \
+    PHP_VERSION=${PHP_VERSION} \
+    PHP_POOL_NAME="www" \
     PHP_DATE_TIMEZONE="UTC" \
     PHP_DISPLAY_ERRORS=Off \
     PHP_DISPLAY_STARTUP_ERRORS=Off \
     PHP_ERROR_REPORTING="22527" \
     PHP_MEMORY_LIMIT="256M" \
     PHP_MAX_EXECUTION_TIME="99" \
-    PHP_OPEN_BASEDIR="$CONTAINER_WORKDIR:/dev/stdout:/tmp" \
+    PHP_OPEN_BASEDIR="$RUNTIME_WORKDIR:/dev/stdout:/tmp" \
     PHP_POST_MAX_SIZE="100M" \
     PHP_UPLOAD_MAX_FILE_SIZE="100M" \
-    PHP_POOL_NAME="www" \
     PHP_PM_CONTROL="dynamic" \
     PHP_PM_MAX_CHILDREN="20" \
     PHP_PM_START_SERVERS="2" \
     PHP_PM_MIN_SPARE_SERVERS="1" \
-    PHP_PM_MAX_SPARE_SERVERS="3" \
-    COMPOSER_HOME=/composer
+    PHP_PM_MAX_SPARE_SERVERS="3"
 
 #  Base Packages
 RUN apt-get update \
@@ -42,28 +48,40 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLA
 RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 
 # User
-RUN groupadd -r -g $CONTAINER_GROUP_ID webgroup \
-    && useradd --no-log-init -r -s /usr/bin/bash -d $CONTAINER_WORKDIR -u $CONTAINER_USER_ID -g $CONTAINER_GROUP_ID webuser
+RUN groupadd -r -g $RUNTIME_GID app \
+    && useradd --no-log-init -r -s /usr/bin/bash -m -d $RUNTIME_USERDIR -u $RUNTIME_UID -g $RUNTIME_GID app
 
 # Install Packages
+ADD install-packages /usr/bin/install-packages
 ADD packages/${PHP_VERSION}.txt /tmp/packages.txt
+
 RUN add-apt-repository ppa:ondrej/php \
     && mkdir -p /etc/php/current \
     && ln -sf /etc/php/current /etc/php/${PHP_VERSION} \
     && ln -sf /usr/sbin/php-fpm${PHP_VERSION} /usr/sbin/php-fpm \
-    && apt-get install -y --no-install-recommends \
+    && install-packages \
     $(cat /tmp/packages.txt) \
-    nginx \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/* /var/www/html/*
+    curl nano msmtp nginx
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Install Composer
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
+    && php composer-setup.php \
+    && mv composer.phar /usr/local/bin/composer \
+    && php -r "unlink('composer-setup.php');" \
+    && composer --version
 
-# Filesystem
+# Install WPCLI
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
+    && chmod +x wp-cli.phar \
+    && mv wp-cli.phar /usr/local/bin/wp \
+    && wp --allow-root --version
+
+# Config
 COPY rootfs /
 
-RUN mkdir /run/php
+RUN ln -sf ${RUNTIME_WORKDIR} ${RUNTIME_USERDIR}/www \
+    && chown -R app:app ${RUNTIME_WORKDIR} ${RUNTIME_USERDIR}
 
-WORKDIR ${CONTAINER_WORKDIR}
+WORKDIR ${RUNTIME_WORKDIR}
 
 ENTRYPOINT ["/init"]
