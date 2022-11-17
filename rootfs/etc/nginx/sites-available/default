@@ -1,45 +1,114 @@
 server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
+	# Ports to listen on
+	listen 80 default_server;
+	listen [::]:80 default_server;
 
-    root /www/app/public;
+	# Server name to listen for
+	server_name _;
 
-    # Set allowed "index" files
-    index index.html index.htm index.php;
+	# Path to document root
+	root /www/app/public;
 
-    server_name _;
+	# File to be used as index
+	index index.php index.html;
 
-    charset utf-8;
+	# ---- EXCLUSIONS ---- #
 
-    # Set max upload to 2048M
-    client_max_body_size 2048M;
+	# Deny all attempts to access hidden files such as .htaccess, .htpasswd, .DS_Store (Mac).
+	# Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
+	location ~* /\.(?!well-known\/) {
+		deny all;
+	}
 
-    # Healthchecks: Set /ping to be the healhcheck URL
-    location /ping {
-        access_log off;
+	# Prevent access to certain file extensions
+	location ~\.(ini|log|conf)$ {
+		deny all;
+	}
 
-        # set max 5 seconds for healthcheck
-        fastcgi_read_timeout 5s;
+	# Deny access to any files with a .php extension in the uploads directory
+	# Works in sub-directory installs and also in multisite network
+	# Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
+	location ~* /(?:uploads|files)/.*\.php$ {
+		deny all;
+	}
 
-        include        fastcgi_params;
-        fastcgi_param  SCRIPT_NAME     /ping;
-        fastcgi_param  SCRIPT_FILENAME /ping;
-        fastcgi_pass   127.0.0.1:9000;
-    }
+	# ---- SECURITY ---- #
 
-    # Have NGINX try searching for PHP files as well
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
+	# Hide Nginx version in error messages and reponse headers.
+	server_tokens off;
 
-    # Pass "*.php" files to PHP-FPM
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_param  HTTPS $fastcgi_https if_not_empty;
-        fastcgi_param  HTTP_HOST $http_x_forwarded_host if_not_empty;
-        fastcgi_pass 127.0.0.1:9000;
-    }
+	# Don't allow pages to be rendered in an iframe on external domains.
+	add_header X-Frame-Options "SAMEORIGIN" always;
 
-    # Additional config
-    include /etc/nginx/server-opts.d/*.conf;
+	# MIME sniffing prevention
+	add_header X-Content-Type-Options "nosniff" always;
+
+	# Enable cross-site scripting filter in supported browsers.
+	add_header X-Xss-Protection "1; mode=block" always;
+
+	# Whitelist sources which are allowed to load assets (JS, CSS, etc). The following will block
+	# only none HTTPS assets, but check out https://scotthelme.co.uk/content-security-policy-an-introduction/
+	# for an in-depth guide on creating a more restrictive policy.
+	# add_header Content-Security-Policy "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';" always;
+
+	# ---- SSL ---- #
+
+	# Generic SSL enhancements. Use https://www.ssllabs.com/ssltest/ to test
+	# and recommend further improvements.
+
+	# Don't use outdated SSLv3 protocol. Protects against BEAST and POODLE attacks.
+	ssl_protocols TLSv1.2;
+
+	# Use secure ciphers
+	ssl_ciphers EECDH+CHACHA20:EECDH+AES;
+	ssl_ecdh_curve X25519:prime256v1:secp521r1:secp384r1;
+	ssl_prefer_server_ciphers on;
+
+	# Define the size of the SSL session cache in MBs.
+	ssl_session_cache shared:SSL:10m;
+
+	# Define the time in minutes to cache SSL sessions.
+	ssl_session_timeout 1h;
+
+	# ---- LOCATIONS ---- #
+
+	# Global locations
+  	include locations/*;
+
+	# Default location
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+
+	# PHP location
+	location ~ \.php$ {
+		try_files $uri =404;
+
+		# ---- FASTCGI PARAMS ---- #
+
+		fastcgi_param  QUERY_STRING       $query_string;
+		fastcgi_param  REQUEST_METHOD     $request_method;
+		fastcgi_param  CONTENT_TYPE       $content_type;
+		fastcgi_param  CONTENT_LENGTH     $content_length;
+
+		fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
+		fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;
+		fastcgi_param  REQUEST_URI        $request_uri;
+		fastcgi_param  DOCUMENT_URI       $document_uri;
+		fastcgi_param  DOCUMENT_ROOT      $document_root;
+		fastcgi_param  SERVER_PROTOCOL    $server_protocol;
+		fastcgi_param  REQUEST_SCHEME     $scheme;
+		fastcgi_param  HTTPS              $fastcgi_https if_not_empty;
+
+		fastcgi_param  GATEWAY_INTERFACE  CGI/1.1;
+		fastcgi_param  SERVER_SOFTWARE    nginx/$nginx_version;
+
+		fastcgi_param  REMOTE_ADDR        $remote_addr;
+		fastcgi_param  REMOTE_PORT        $remote_port;
+		fastcgi_param  SERVER_ADDR        $server_addr;
+		fastcgi_param  SERVER_PORT        $server_port;
+		fastcgi_param  SERVER_NAME        $server_name;
+
+		fastcgi_pass 127.0.0.1:9000;
+	}
 }
