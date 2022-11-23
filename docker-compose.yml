@@ -9,3 +9,4 @@ services:
         PHP_VERSION: '8.0'
     ports:
       - 8080:80
+      - 8443:443

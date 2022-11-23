@@ -2,6 +2,13 @@ server {
 	# Ports to listen on
 	listen 80 default_server;
 	listen [::]:80 default_server;
+	listen 443 http2 ssl default_server;
+    listen [::]:443 http2 ssl default_server;
+
+    # SSL
+    ssl_certificate /etc/ssl/web/ssl.crt;
+    ssl_certificate_key /etc/ssl/web/ssl.key;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
 
 	# Server name to listen for
 	server_name _;
@@ -58,11 +65,6 @@ server {
 
 	# Don't use outdated SSLv3 protocol. Protects against BEAST and POODLE attacks.
 	ssl_protocols TLSv1.2;
-
-	# Use secure ciphers
-	ssl_ciphers EECDH+CHACHA20:EECDH+AES;
-	ssl_ecdh_curve X25519:prime256v1:secp521r1:secp384r1;
-	ssl_prefer_server_ciphers on;
 
 	# Define the size of the SSL session cache in MBs.
 	ssl_session_cache shared:SSL:10m;
