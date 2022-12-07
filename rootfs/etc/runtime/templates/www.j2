@@ -1,9 +1,3 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Docker friendly settings
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; These settings are offered specifically to behave well in a containerized environment.
-
 [global]
 ; Override default pid file
 pid = /run/php-fpm.pid
@@ -18,13 +12,11 @@ process_control_timeout = 30
 ; Do not daemonize (eg send process to the background)
 daemonize = no
 
-[${PHP_POOL_NAME}]
+[app]
 ; Access from webserver container is via network, not socket file
 listen = [::]:9000
 
 ; Unix user/group of processes
-; Note: The user is mandatory. If the group is not set, the default user's group
-;       will be used.
 user = app
 group = app
 
@@ -66,7 +58,7 @@ clear_env = no
 ;             pm.process_idle_timeout   - The number of seconds after which
 ;                                         an idle process will be killed.
 ; Note: This value is mandatory.
-pm = ${PHP_PM_CONTROL}
+pm = {{ env('PHP_PM_CONTROL', 'dynamic') }}
 
 ; The number of child processes to be created when pm is set to 'static' and the
 ; maximum number of child processes when pm is set to 'dynamic' or 'ondemand'.
@@ -77,22 +69,22 @@ pm = ${PHP_PM_CONTROL}
 ; forget to tweak pm.* to fit your needs.
 ; Note: Used when pm is set to 'static', 'dynamic' or 'ondemand'
 ; Note: This value is mandatory.
-pm.max_children = ${PHP_PM_MAX_CHILDREN}
+pm.max_children = {{ env('PHP_PM_MAX_CHILDREN', '20') }}
 
 ; The number of child processes created on startup.
 ; Note: Used only when pm is set to 'dynamic'
 ; Default Value: (min_spare_servers + max_spare_servers) / 2
-pm.start_servers = ${PHP_PM_START_SERVERS}
+pm.start_servers = {{ env('PHP_PM_START_SERVERS', '2') }}
 
 ; The desired minimum number of idle server processes.
 ; Note: Used only when pm is set to 'dynamic'
 ; Note: Mandatory when pm is set to 'dynamic'
-pm.min_spare_servers = ${PHP_PM_MIN_SPARE_SERVERS}
+pm.min_spare_servers = {{ env('PHP_PM_MIN_SPARE_SERVERS', '1') }}
 
 ; The desired maximum number of idle server processes.
 ; Note: Used only when pm is set to 'dynamic'
 ; Note: Mandatory when pm is set to 'dynamic'
-pm.max_spare_servers = ${PHP_PM_MAX_SPARE_SERVERS}
+pm.max_spare_servers = {{ env('PHP_PM_MAX_SPARE_SERVERS', '3') }}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Healthcheck settings
@@ -222,24 +214,24 @@ ping.path = /ping
 ; can be changed with environment variables.
 
 ; Security measures
-php_admin_value[open_basedir] = ${PHP_OPEN_BASEDIR}
+php_admin_value[open_basedir] = {{ env('PHP_OPEN_BASEDIR', '') }}
 php_admin_flag[session.cookie_secure] = true
 
 ; Regional settings
-php_value[date.timezone] = ${PHP_DATE_TIMEZONE}
+php_value[date.timezone] = {{ env('PHP_OPEN_BASEDIR', 'UTC') }}
 
 ; Error reporting settings
-php_value[display_errors] = ${PHP_DISPLAY_ERRORS}
-php_value[display_startup_errors] = ${PHP_DISPLAY_STARTUP_ERRORS}
-php_value[error_reporting] = ${PHP_ERROR_REPORTING}
+php_value[display_errors] = {{ env('PHP_DISPLAY_ERRORS', 'Off') }}
+php_value[display_startup_errors] = {{ env('PHP_DISPLAY_STARTUP_ERRORS', 'Off') }}
+php_value[error_reporting] = {{ env('PHP_ERROR_REPORTING', '22527') }}
 
 ; Performance settings
-php_value[memory_limit] = ${PHP_MEMORY_LIMIT}
-php_value[max_execution_time] = ${PHP_MAX_EXECUTION_TIME}
+php_value[memory_limit] = {{ env('PHP_MEMORY_LIMIT', '256M') }}
+php_value[max_execution_time] = {{ env('PHP_MAX_EXECUTION_TIME', '99') }}
 
 ; Upload settings
-php_value[post_max_size] = ${PHP_POST_MAX_SIZE}
-php_value[upload_max_filesize] = ${PHP_UPLOAD_MAX_FILE_SIZE}
+php_value[post_max_size] = {{ env('PHP_POST_MAX_SIZE', '100M') }}
+php_value[upload_max_filesize] = {{ env('PHP_UPLOAD_MAX_FILE_SIZE', '100M') }}
 
 ; Sendmail: Direct local emails to use msmtp
 php_admin_value[sendmail_path] = /usr/bin/msmtp -C /etc/msmtprc -t --read-envelope-from

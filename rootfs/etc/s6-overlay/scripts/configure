@@ -1,0 +1,43 @@
+#!/command/with-contenv bash
+
+if [[ $RUNTIME_UID != 1000 || $RUNTIME_GID != 1000 ]]; then
+  echo "⚡‍ Update GID to $RUNTIME_UID..."
+  groupmod -o -g "$RUNTIME_GID" app
+
+  echo "⚡‍ Update UID to $RUNTIME_UID..."
+  usermod -o -u "$RUNTIME_UID" app
+fi
+
+echo "⚡ Create filesystem in $RUNTIME_WORKDIR..."
+mkdir -p $RUNTIME_WORKDIR/logs \
+  $RUNTIME_WORKDIR/public \
+  $RUNTIME_WORKDIR/certs
+
+chown app:app \
+  $RUNTIME_WORKDIR \
+  $RUNTIME_WORKDIR/logs \
+  $RUNTIME_WORKDIR/public \
+  $RUNTIME_WORKDIR/certs
+
+if [ ! -f $RUNTIME_WORKDIR/certs/default.key ]; then
+  echo "⚡ Generate a self-signed SSL certificate..."
+  openssl req -x509 -subj "/C=US/ST=Wisconsin/L=Milwaukee/O=IT/CN=default.test" -nodes -newkey rsa:2048 -keyout $RUNTIME_WORKDIR/certs/default.key -out $RUNTIME_WORKDIR/certs/default.crt -days 365 2>/dev/null
+fi
+
+echo "⚡ Generate Nginx configuration..."
+j2 /etc/runtime/templates/nginx.j2 >/etc/nginx/nginx.conf
+j2 /etc/runtime/templates/vhost.j2 >/etc/nginx/sites-available/default
+
+echo "⚡ Generate PHP configuration..."
+j2 /etc/runtime/templates/www.j2 >/etc/php/current/fpm/pool.d/www.conf
+
+echo "
+-------------------------------------------
+Container Info
+-------------------------------------------
+User ID:       $(id -u app)
+Group ID:      $(id -g app)
+Workdir:       ${RUNTIME_WORKDIR}
+Powered By:    sitepilot.io
+-------------------------------------------
+"
