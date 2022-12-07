@@ -25,11 +25,11 @@ if [ ! -f $RUNTIME_WORKDIR/certs/default.key ]; then
 fi
 
 echo "⚡ Generate Nginx configuration..."
-j2 /etc/runtime/templates/nginx.j2 >/etc/nginx/nginx.conf
-j2 /etc/runtime/templates/vhost.j2 >/etc/nginx/sites-available/default
+j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/nginx.j2 >/etc/nginx/nginx.conf
+j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/vhost.j2 >/etc/nginx/sites-available/default
 
 echo "⚡ Generate PHP configuration..."
-j2 /etc/runtime/templates/www.j2 >/etc/php/current/fpm/pool.d/www.conf
+j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/www.j2 >/etc/php/current/fpm/pool.d/www.conf
 
 echo "
 -------------------------------------------

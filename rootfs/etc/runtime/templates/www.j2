@@ -228,6 +228,7 @@ php_value[error_reporting] = {{ env('PHP_ERROR_REPORTING', '22527') }}
 ; Performance settings
 php_value[memory_limit] = {{ env('PHP_MEMORY_LIMIT', '256M') }}
 php_value[max_execution_time] = {{ env('PHP_MAX_EXECUTION_TIME', '99') }}
+php_value[max_input_vars] = {{ env('PHP_MAX_INPUT_VARS', '10000') }}
 
 ; Upload settings
 php_value[post_max_size] = {{ env('PHP_POST_MAX_SIZE', '100M') }}

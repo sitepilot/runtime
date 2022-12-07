@@ -1,4 +1,4 @@
-{% if env("NGINX_CACHE_ENABLED", false) %}
+{% if env("NGINX_CACHE_ENABLED", false) | to_bool %}
 # Define path to cache and memory zone. The memory zone should be unique.
 # keys_zone=single-site-with-caching.com:100m creates the memory zone and sets the maximum size in MBs.
 # inactive=60m will remove cached items that haven't been accessed for 60 minutes or more.
@@ -64,7 +64,7 @@ server {
 	# for an in-depth guide on creating a more restrictive policy.
 	# add_header Content-Security-Policy "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';" always;
 
-{% if env("NGINX_CACHE_ENABLED", false) %}
+{% if env("NGINX_CACHE_ENABLED", false) | to_bool %}
 	# ---- CACHE ---- #
 
 	# The key to use when saving cache files, which will run through the MD5 hashing algorithm.
@@ -161,7 +161,7 @@ server {
 		fastcgi_param  SERVER_PORT        $server_port;
 		fastcgi_param  SERVER_NAME        $server_name;
 
-{% if env("NGINX_CACHE_ENABLED", false) %}
+{% if env("NGINX_CACHE_ENABLED", false) | to_bool %}
 		# ---- FASTCGI CACHE ---- #
 
 		# Skip cache based on rules in global/fastcgi-cache.conf.

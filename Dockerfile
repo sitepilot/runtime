@@ -48,7 +48,7 @@ RUN add-apt-repository ppa:ondrej/php \
     && ln -sf /usr/sbin/php-fpm${PHP_VERSION} /usr/sbin/php-fpm \
     && install-packages \
     $(cat /tmp/packages.txt) \
-    curl nano unzip msmtp nginx
+    curl nano unzip msmtp nginx mariadb-client
 
 # Install Composer
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
