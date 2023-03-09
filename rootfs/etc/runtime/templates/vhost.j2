@@ -161,6 +161,8 @@ server {
 		fastcgi_param  SERVER_PORT        $server_port;
 		fastcgi_param  SERVER_NAME        $server_name;
 
+        fastcgi_param  HTTP_HOST          $http_x_forwarded_host if_not_empty;
+
 {% if env("NGINX_CACHE_ENABLED", false) | to_bool %}
 		# ---- FASTCGI CACHE ---- #
 
