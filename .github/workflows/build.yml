@@ -34,8 +34,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image
-        run: |
-          BRANCH=${GITHUB_REF##*/}
-          [[ $BRANCH == 'main' ]] && PUSH="--push" || PUSH=""
-          docker buildx build $PUSH --tag ghcr.io/sitepilot/runtime:${{ matrix.php }} --build-arg PHP_VERSION=${{ matrix.php }} --platform linux/amd64,linux/arm64/v8 .
+      #- name: Build image
+      #  run: |
+      #    BRANCH=${GITHUB_REF##*/}
+      #    [[ $BRANCH == 'main' ]] && PUSH="--push" || PUSH=""
+      #    docker buildx build $PUSH --tag ghcr.io/sitepilot/runtime:${{ matrix.php }} --build-arg PHP_VERSION=${{ matrix.php }} --platform linux/amd64,linux/arm64/v8 .
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: ghcr.io/sitepilot/runtime:${{ matrix.php }}-arm
+          platforms: linux/amd64,linux/arm64
