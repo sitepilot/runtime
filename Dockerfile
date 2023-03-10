@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM --platform=$BUILDPLATFORM ubuntu:22.04
 
 # Build args
 ARG RUNTIME_UID=1000
