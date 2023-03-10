@@ -19,6 +19,11 @@ chown app:app \
   $RUNTIME_WORKDIR/public \
   $RUNTIME_WORKDIR/certs
 
+if [ "$RUNTIME_RESET_PERMISSIONS" = true ] ; then
+  echo "⚡ Reset file permissions..."
+  chown -R app:app $RUNTIME_WORKDIR/public
+fi
+
 if [ ! -f $RUNTIME_WORKDIR/certs/default.key ]; then
   echo "⚡ Generate a self-signed SSL certificate..."
   openssl req -x509 -subj "/C=US/ST=Wisconsin/L=Milwaukee/O=IT/CN=default.test" -nodes -newkey rsa:2048 -keyout $RUNTIME_WORKDIR/certs/default.key -out $RUNTIME_WORKDIR/certs/default.crt -days 365 2>/dev/null
