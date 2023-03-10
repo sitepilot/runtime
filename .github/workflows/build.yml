@@ -38,4 +38,4 @@ jobs:
         run: |
           BRANCH=${GITHUB_REF##*/}
           [[ $BRANCH == 'main' ]] && PUSH="--push" || PUSH=""
-          docker buildx build $PUSH --tag ghcr.io/sitepilot/runtime:${{ matrix.php }} --build-arg PHP_VERSION=${{ matrix.php }} --platform linux/amd64,linux/arm/v8 .
+          docker buildx build $PUSH --tag ghcr.io/sitepilot/runtime:${{ matrix.php }} --build-arg PHP_VERSION=${{ matrix.php }} --platform linux/amd64,linux/arm64/v8 .
