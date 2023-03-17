@@ -8,7 +8,7 @@ fastcgi_cache_path {{ env('RUNTIME_WORKDIR') }}/cache levels=1:2 keys_zone=app:1
 server {
 	# Ports to listen on
 	listen 80 default_server;
-    listen [::]:80 default_server;
+  listen [::]:80 default_server;
 	listen 443 ssl http2 default_server;
 	listen [::]:443 ssl http2 default_server;
 
@@ -160,8 +160,6 @@ server {
 		fastcgi_param  SERVER_ADDR        $server_addr;
 		fastcgi_param  SERVER_PORT        $server_port;
 		fastcgi_param  SERVER_NAME        $server_name;
-
-        fastcgi_param  HTTP_HOST          $http_x_forwarded_host if_not_empty;
 
 {% if env("NGINX_CACHE_ENABLED", false) | to_bool %}
 		# ---- FASTCGI CACHE ---- #
