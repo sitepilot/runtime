@@ -70,7 +70,7 @@ RUN pip install j2cli
 # Config
 COPY rootfs /
 
-RUN chown -R ${RUNTIME_USER}:${RUNTIME_USER} ${RUNTIME_WORKDIR}
+RUN chown -R ${RUNTIME_USER}:${RUNTIME_GROUP} ${RUNTIME_WORKDIR}
 
 WORKDIR ${RUNTIME_WORKDIR}/public
 
