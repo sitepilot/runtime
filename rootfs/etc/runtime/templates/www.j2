@@ -28,7 +28,7 @@ catch_workers_output = yes
 decorate_workers_output = no
 
 ; Required to allow config-by-environment
-clear_env = no
+clear_env = {{ env('PHP_CLEAR_ENV', 'yes') }}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Process Management Settings
