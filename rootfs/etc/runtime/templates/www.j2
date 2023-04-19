@@ -17,8 +17,8 @@ daemonize = no
 listen = [::]:9000
 
 ; Unix user/group of processes
-user = app
-group = app
+user = {{ env("RUNTIME_USER") }}
+group = {{ env("RUNTIME_GROUP") }}
 
 ; Redirect logs to stdout - FPM closes /dev/std* on startup
 access.log = /proc/self/fd/1

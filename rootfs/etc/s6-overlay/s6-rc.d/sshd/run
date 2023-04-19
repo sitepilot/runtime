@@ -1,0 +1,4 @@
+#!/command/with-contenv bash
+[ "$RUNTIME_SSH" != true ] && exit 0
+mkdir -p /run/sshd
+/usr/sbin/sshd -D -e

@@ -1,11 +1,28 @@
 #!/command/with-contenv bash
 
-if [[ $RUNTIME_UID != 1000 || $RUNTIME_GID != 1000 ]]; then
-  echo "⚡‍ Update GID to $RUNTIME_UID..."
-  groupmod -o -g "$RUNTIME_GID" app
+if [[ $RUNTIME_USER != "app" ]]; then
+  echo "⚡ Update user name..."
+  usermod -l $RUNTIME_USER app
+fi
 
+if [[ $RUNTIME_GROUP != "app" ]]; then
+  echo "⚡ Update group name..."
+  groupmod -n $RUNTIME_GROUP app
+fi
+
+if [[ $RUNTIME_UID != 1000 ]]; then
   echo "⚡‍ Update UID to $RUNTIME_UID..."
-  usermod -o -u "$RUNTIME_UID" app
+  usermod -o -u "$RUNTIME_UID" "$RUNTIME_USER"
+fi
+
+if [[ $RUNTIME_GID != 1000 ]]; then
+  echo "⚡‍ Update GID to $RUNTIME_UID..."
+  groupmod -o -g "$RUNTIME_GID" "$RUNTIME_GROUP"
+fi
+
+if [[ ! -z "$RUNTIME_PASSWORD" ]]; then
+  echo "⚡ Update user password..."
+  echo "$RUNTIME_USER:$RUNTIME_PASSWORD" | chpasswd
 fi
 
 echo "⚡ Create filesystem in $RUNTIME_WORKDIR..."
@@ -13,15 +30,15 @@ mkdir -p $RUNTIME_WORKDIR/logs \
   $RUNTIME_WORKDIR/public \
   $RUNTIME_WORKDIR/certs
 
-chown app:app \
+chown $RUNTIME_USER:$RUNTIME_GROUP \
   $RUNTIME_WORKDIR \
   $RUNTIME_WORKDIR/logs \
   $RUNTIME_WORKDIR/public \
   $RUNTIME_WORKDIR/certs
 
-if [ "$RUNTIME_RESET_PERMISSIONS" = true ] ; then
+if [ "$RUNTIME_RESET_PERMISSIONS" = true ]; then
   echo "⚡ Reset file permissions..."
-  chown -R app:app $RUNTIME_WORKDIR/public
+  chown -R $RUNTIME_USER $RUNTIME_WORKDIR/public
 fi
 
 if [ ! -f $RUNTIME_WORKDIR/certs/default.key ]; then
@@ -40,8 +57,10 @@ echo "
 -------------------------------------------
 Container Info
 -------------------------------------------
-User ID:       $(id -u app)
-Group ID:      $(id -g app)
+User:          ${RUNTIME_USER}
+Group:         ${RUNTIME_GROUP}
+User ID:       $(id -u $RUNTIME_USER)
+Group ID:      $(id -g $RUNTIME_USER)
 Workdir:       ${RUNTIME_WORKDIR}
 Powered By:    sitepilot.io
 -------------------------------------------
