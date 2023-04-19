@@ -10,19 +10,19 @@ if [[ $RUNTIME_GROUP != "app" ]]; then
   groupmod -n $RUNTIME_GROUP app
 fi
 
+if [[ ! -z "$RUNTIME_PASSWORD" ]]; then
+  echo "⚡ Update user password..."
+  echo "$RUNTIME_USER:$RUNTIME_PASSWORD" | chpasswd
+fi
+
 if [[ $RUNTIME_UID != 1000 ]]; then
-  echo "⚡‍ Update UID to $RUNTIME_UID..."
+  echo "⚡ Update UID to $RUNTIME_UID..."
   usermod -o -u "$RUNTIME_UID" "$RUNTIME_USER"
 fi
 
 if [[ $RUNTIME_GID != 1000 ]]; then
-  echo "⚡‍ Update GID to $RUNTIME_UID..."
+  echo "⚡ Update GID to $RUNTIME_UID..."
   groupmod -o -g "$RUNTIME_GID" "$RUNTIME_GROUP"
-fi
-
-if [[ ! -z "$RUNTIME_PASSWORD" ]]; then
-  echo "⚡ Update user password..."
-  echo "$RUNTIME_USER:$RUNTIME_PASSWORD" | chpasswd
 fi
 
 echo "⚡ Create filesystem in $RUNTIME_WORKDIR..."
