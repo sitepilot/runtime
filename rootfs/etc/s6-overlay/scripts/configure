@@ -1,67 +1,95 @@
 #!/command/with-contenv bash
 
-if [[ $RUNTIME_USER != "app" ]]; then
-  echo "⚡ Update user name..."
-  usermod -l $RUNTIME_USER app
-fi
-
-if [[ $RUNTIME_GROUP != "app" ]]; then
-  echo "⚡ Update group name..."
-  groupmod -n $RUNTIME_GROUP app
-fi
-
-if [[ ! -z "$RUNTIME_PASSWORD" ]]; then
-  echo "⚡ Update user password..."
-  echo "$RUNTIME_USER:$RUNTIME_PASSWORD" | chpasswd
-fi
-
-if [[ $RUNTIME_UID != 1000 ]]; then
-  echo "⚡ Update UID to $RUNTIME_UID..."
-  usermod -o -u "$RUNTIME_UID" "$RUNTIME_USER"
-fi
-
-if [[ $RUNTIME_GID != 1000 ]]; then
-  echo "⚡ Update GID to $RUNTIME_UID..."
-  groupmod -o -g "$RUNTIME_GID" "$RUNTIME_GROUP"
-fi
-
-echo "⚡ Create filesystem in $RUNTIME_WORKDIR..."
-mkdir -p $RUNTIME_WORKDIR/logs \
-  $RUNTIME_WORKDIR/public \
-  $RUNTIME_WORKDIR/certs
-
-chown $RUNTIME_USER:$RUNTIME_GROUP \
-  $RUNTIME_WORKDIR \
-  $RUNTIME_WORKDIR/logs \
-  $RUNTIME_WORKDIR/public \
-  $RUNTIME_WORKDIR/certs
-
-if [ "$RUNTIME_RESET_PERMISSIONS" = true ]; then
-  echo "⚡ Reset file permissions..."
-  chown -R $RUNTIME_USER $RUNTIME_WORKDIR/public
-fi
-
-if [ ! -f $RUNTIME_WORKDIR/certs/default.key ]; then
-  echo "⚡ Generate a self-signed SSL certificate..."
-  openssl req -x509 -subj "/C=US/ST=Wisconsin/L=Milwaukee/O=IT/CN=default.test" -nodes -newkey rsa:2048 -keyout $RUNTIME_WORKDIR/certs/default.key -out $RUNTIME_WORKDIR/certs/default.crt -days 365 2>/dev/null
-fi
-
-echo "⚡ Generate Nginx configuration..."
-j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/nginx.j2 >/etc/nginx/nginx.conf
-j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/vhost.j2 >/etc/nginx/sites-available/default
-
-echo "⚡ Generate PHP configuration..."
-j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/www.j2 >/etc/php/current/fpm/pool.d/www.conf
-
 echo "
 -------------------------------------------
 Container Info
 -------------------------------------------
 User:          ${RUNTIME_USER}
 Group:         ${RUNTIME_GROUP}
-User ID:       $(id -u $RUNTIME_USER)
-Group ID:      $(id -g $RUNTIME_USER)
+User ID:       ${RUNTIME_UID}
+Group ID:      ${RUNTIME_GID}
 Workdir:       ${RUNTIME_WORKDIR}
-Powered By:    sitepilot.io
 -------------------------------------------
 "
+
+RUNTIME_BOOTED_FILE=/rt-booted
+
+if [[ ! -f $RUNTIME_BOOTED_FILE ]]; then
+  if [[ $RUNTIME_USER != "app" ]]; then
+    echo "⚡ Update user name..."
+    usermod -l $RUNTIME_USER app
+  fi
+
+  if [[ $RUNTIME_GROUP != "app" ]]; then
+    echo "⚡ Update group name..."
+    groupmod -n $RUNTIME_GROUP app
+  fi
+
+  if [[ ! -z "$RUNTIME_PASSWORD" ]]; then
+    echo "⚡ Update user password..."
+    echo "$RUNTIME_USER:$RUNTIME_PASSWORD" | chpasswd
+  fi
+
+  if [[ $RUNTIME_UID != 1000 ]]; then
+    echo "⚡ Update UID to $RUNTIME_UID..."
+    usermod -o -u "$RUNTIME_UID" "$RUNTIME_USER"
+  fi
+
+  if [[ $RUNTIME_GID != 1000 ]]; then
+    echo "⚡ Update GID to $RUNTIME_UID..."
+    groupmod -o -g "$RUNTIME_GID" "$RUNTIME_GROUP"
+  fi
+
+  if [[ "$RUNTIME_WELCOME" != true ]]; then
+    rm /etc/update-motd.d/00-welcome
+  fi
+
+  echo "⚡ Create filesystem in $RUNTIME_WORKDIR..."
+  mkdir -p $RUNTIME_WORKDIR/logs \
+    $RUNTIME_WORKDIR/public \
+    $RUNTIME_WORKDIR/certs
+
+  chown $RUNTIME_USER:$RUNTIME_GROUP \
+    $RUNTIME_WORKDIR \
+    $RUNTIME_WORKDIR/logs \
+    $RUNTIME_WORKDIR/public \
+    $RUNTIME_WORKDIR/certs
+
+  if [[ "$RUNTIME_RESET_PERMISSIONS" = true ]]; then
+    echo "⚡ Reset file permissions..."
+    chown -R $RUNTIME_USER $RUNTIME_WORKDIR/public
+  fi
+
+  if [[ ! -f $RUNTIME_WORKDIR/certs/default.key ]]; then
+    echo "⚡ Generate SSL certificate..."
+    openssl req -x509 -subj "/C=US/ST=Wisconsin/L=Milwaukee/O=IT/CN=default.test" -nodes -newkey rsa:2048 -keyout $RUNTIME_WORKDIR/certs/default.key -out $RUNTIME_WORKDIR/certs/default.crt -days 365 2>/dev/null
+  fi
+
+  if [[ "$RUNTIME_SSH" = true ]]; then
+    mkdir -p ${RUNTIME_WORKDIR}/.ssh
+    SSH_HOST_RSA_KEY=${RUNTIME_WORKDIR}/.ssh/ssh_host_rsa_key
+    SSH_HOST_ECDSA_KEY=${RUNTIME_WORKDIR}/.ssh/ssh_host_ecdsa_key
+    SSH_HOST_ED25519_KEY=${RUNTIME_WORKDIR}/.ssh/ssh_host_ed25519_key
+
+    if [[ ! -f $SSH_HOST_RSA_KEY ]]; then
+      echo "⚡ Generate SSHD certificates..."
+      if [ ! -f "$SSH_HOST_ECDSA_KEY" ]; then ssh-keygen -q -N "" -t ecdsa -f $SSH_HOST_ECDSA_KEY; fi
+      if [ ! -f "$SSH_HOST_RSA_KEY" ]; then ssh-keygen -q -N "" -t rsa -b 4096 -f $SSH_HOST_RSA_KEY; fi
+      if [ ! -f "$SSH_HOST_ED25519_KEY" ]; then ssh-keygen -q -N "" -t ed25519 -f $SSH_HOST_ED25519_KEY; fi
+    fi
+
+    echo "⚡ Generate SSHD configuration..."
+    j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/sshd.j2 >/etc/ssh/sshd_config
+  fi
+
+  echo "⚡ Generate Nginx configuration..."
+  j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/nginx.j2 >/etc/nginx/nginx.conf
+  j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/vhost.j2 >/etc/nginx/sites-available/default
+
+  echo "⚡ Generate PHP configuration..."
+  j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/www.j2 >/etc/php/current/fpm/pool.d/www.conf
+
+  touch $RUNTIME_BOOTED_FILE
+
+  printf "✓ Initialization completed\n\n"
+fi
