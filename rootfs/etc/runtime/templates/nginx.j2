@@ -1,5 +1,5 @@
 # Nginx Config
-user app app;
+user {{ env("RUNTIME_USER") }} {{ env("RUNTIME_GROUP") }};
 
 # Set to number of CPU cores, auto will try to autodetect.
 worker_processes auto;

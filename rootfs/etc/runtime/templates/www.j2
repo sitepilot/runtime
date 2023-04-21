@@ -17,8 +17,8 @@ daemonize = no
 listen = [::]:9000
 
 ; Unix user/group of processes
-user = app
-group = app
+user = {{ env("RUNTIME_USER") }}
+group = {{ env("RUNTIME_GROUP") }}
 
 ; Redirect logs to stdout - FPM closes /dev/std* on startup
 access.log = /proc/self/fd/1
@@ -28,7 +28,7 @@ catch_workers_output = yes
 decorate_workers_output = no
 
 ; Required to allow config-by-environment
-clear_env = no
+clear_env = {{ env('PHP_CLEAR_ENV', 'yes') }}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Process Management Settings
@@ -199,7 +199,7 @@ pm.status_path = /status
 ;       anything, but it may not be a good idea to use the .php extension or it
 ;       may conflict with a real PHP file.
 ; Default Value: not set
-ping.path = /ping
+ping.path = /-/ping
 
 ; This directive may be used to customize the response of a ping request. The
 ; response is formatted as text/plain with a 200 response code.

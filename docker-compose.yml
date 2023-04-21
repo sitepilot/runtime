@@ -7,6 +7,15 @@ services:
       dockerfile: Dockerfile
       args:
         PHP_VERSION: '8.0'
+    environment:
+      RUNTIME_SSH: true
+      RUNTIME_USER: test-user
+      RUNTIME_GROUP: test-user
+      RUNTIME_UID: 1001
+      RUNTIME_GID: 1001
+      RUNTIME_PASSWORD: supersecret
+      RUNTIME_WELCOME: true
     ports:
-      - 8080:80
-      - 8443:443
+      - 9080:80
+      - 9443:443
+      - 9222:22

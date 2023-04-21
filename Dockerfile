@@ -1,16 +1,17 @@
 FROM ubuntu:22.04
 
 # Build args
-ARG RUNTIME_UID=1000
-ARG RUNTIME_GID=1000
-ARG RUNTIME_WORKDIR=/www/app
 ARG PHP_VERSION='8.0'
-ARG S6_OVERLAY_VERSION='3.1.2.1'
+ARG S6_OVERLAY_VERSION='3.1.4.2'
 
 # Environment
-ENV RUNTIME_UID=${RUNTIME_UID} \
-    RUNTIME_GID=${RUNTIME_GID} \
-    RUNTIME_WORKDIR=${RUNTIME_WORKDIR} \
+ENV RUNTIME_SSH=false \
+    RUNTIME_USER=app \
+    RUNTIME_GROUP=app \
+    RUNTIME_UID=1000 \
+    RUNTIME_GID=1000 \
+    RUNTIME_WORKDIR=/www/app \
+    RUNTIME_WELCOME=false \
     S6_KEEP_ENV=1 \
     S6_VERBOSITY=1 \
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
@@ -25,7 +26,8 @@ RUN apt-get update \
     software-properties-common \
     gpg-agent \
     xz-utils \
-    python3-pip
+    python3-pip \
+    openssh-server
 
 # S6 Overlay
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
@@ -35,8 +37,8 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLA
 RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 
 # User
-RUN groupadd -r -g $RUNTIME_GID app \
-    && useradd --no-log-init -r -s /usr/bin/bash -m -d $RUNTIME_WORKDIR -u $RUNTIME_UID -g $RUNTIME_GID app
+RUN groupadd -r -g ${RUNTIME_GID} ${RUNTIME_GROUP} \
+    && useradd --no-log-init -r -s /usr/bin/bash -m -d ${RUNTIME_WORKDIR} -u ${RUNTIME_UID} -g ${RUNTIME_GID} ${RUNTIME_USER}
 
 # Install Packages
 ADD install-packages /usr/bin/install-packages
@@ -67,9 +69,11 @@ RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli
 RUN pip install j2cli
 
 # Config
+RUN rm -rf /etc/update-motd.d/*
+
 COPY rootfs /
 
-RUN chown -R app:app ${RUNTIME_WORKDIR}
+RUN chown -R ${RUNTIME_USER}:${RUNTIME_GROUP} ${RUNTIME_WORKDIR}
 
 WORKDIR ${RUNTIME_WORKDIR}/public
 
