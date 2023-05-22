@@ -67,17 +67,16 @@ if [[ ! -f $RUNTIME_BOOTED_FILE ]]; then
 
   if [[ "$RUNTIME_SSH" = true ]]; then
     mkdir -p ${RUNTIME_WORKDIR}/.ssh
-    SSH_HOST_KEY_FILE=${RUNTIME_WORKDIR}/.ssh/ssh_host_key
+    SSH_HOST_RSA_KEY=${RUNTIME_WORKDIR}/.ssh/ssh_host_rsa_key
+    SSH_HOST_ECDSA_KEY=${RUNTIME_WORKDIR}/.ssh/ssh_host_ecdsa_key
+    SSH_HOST_ED25519_KEY=${RUNTIME_WORKDIR}/.ssh/ssh_host_ed25519_key
 
-    if [[ ! -z $RUNTIME_SSH_HOST_KEY ]]; then
-      echo "⚡ Configure SSH host key..."
-      echo "$RUNTIME_SSH_HOST_KEY" > $SSH_HOST_KEY_FILE
-    elif [[ ! -f "$SSH_HOST_KEY_FILE" ]]; then
-      echo "⚡ Generate SSH host key..."
-      ssh-keygen -q -N "" -t rsa -b 4096 -f $SSH_HOST_KEY_FILE
+    if [[ ! -f $SSH_HOST_RSA_KEY ]]; then
+      echo "⚡ Generate SSHD certificates..."
+      if [ ! -f "$SSH_HOST_ECDSA_KEY" ]; then ssh-keygen -q -N "" -t ecdsa -f $SSH_HOST_ECDSA_KEY; fi
+      if [ ! -f "$SSH_HOST_RSA_KEY" ]; then ssh-keygen -q -N "" -t rsa -b 4096 -f $SSH_HOST_RSA_KEY; fi
+      if [ ! -f "$SSH_HOST_ED25519_KEY" ]; then ssh-keygen -q -N "" -t ed25519 -f $SSH_HOST_ED25519_KEY; fi
     fi
-
-    chmod 600 $SSH_HOST_KEY_FILE
 
     echo "⚡ Generate SSHD configuration..."
     j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/sshd.j2 >/etc/ssh/sshd_config
