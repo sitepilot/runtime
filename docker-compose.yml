@@ -13,8 +13,10 @@ services:
       RUNTIME_GROUP: test-user
       RUNTIME_UID: 1001
       RUNTIME_GID: 1001
-      RUNTIME_PASSWORD: supersecret
       RUNTIME_WELCOME: true
+      RUNTIME_PASSWORD_FILE: /run/secrets/runtime_password
+    volumes:
+      - ./secrets:/run/secrets
     ports:
       - 9080:80
       - 9443:443
