@@ -55,6 +55,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
+            IMAGE=${{ matrix.server }}
             PHP_VERSION=${{ matrix.php }}
-            RUNTIME_SERVER=${{ matrix.server }}
         if: matrix.server == 'openlitespeed'
