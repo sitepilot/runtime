@@ -1,0 +1,20 @@
+docRoot                   $VH_ROOT/public/{{ env('NGINX_DOCROOT', '') }}
+
+errorlog $VH_ROOT/logs/error.log {
+  useServer               0
+  logLevel                ERROR
+  rollingSize             10M
+  keepDays                7
+}
+
+accesslog $VH_ROOT/logs/access.log {
+  useServer               0
+  logHeaders              0
+  rollingSize             10M
+  keepDays                7
+}
+
+rewrite  {
+  enable                  1
+  autoLoadHtaccess        1
+}

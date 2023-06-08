@@ -106,7 +106,7 @@ rt_init() {
 
   if [[ ! -f $RUNTIME_WORKDIR/certs/default.key ]]; then
     rt_info "Generate SSL certificate..."
-    openssl req -x509 -subj "/C=US/ST=Wisconsin/L=Milwaukee/O=IT/CN=default.test" -nodes -newkey rsa:2048 -keyout $RUNTIME_WORKDIR/certs/default.key -out $RUNTIME_WORKDIR/certs/default.crt -days 365 2>/dev/null
+    openssl req -x509 -subj "/C=US/ST=Wisconsin/L=Milwaukee/O=IT/CN=app.test" -nodes -newkey rsa:2048 -keyout $RUNTIME_WORKDIR/certs/default.key -out $RUNTIME_WORKDIR/certs/default.crt -days 365 2>/dev/null
   fi
 
   if [[ "$RUNTIME_SSH" = true ]]; then
@@ -126,12 +126,18 @@ rt_init() {
     j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/sshd.j2 >/etc/ssh/sshd_config
   fi
 
-  rt_info "Generate Nginx configuration..."
-  j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/nginx.j2 >/etc/nginx/nginx.conf
-  j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/vhost.j2 >/etc/nginx/sites-available/default
+  if [[ "$RUNTIME_SERVER" = "openlitespeed" ]]; then
+    rt_info "Generate OpenLiteSpeed configuration..."
+    j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/openlitespeed.j2 >/usr/local/lsws/conf/httpd_config.conf
+    j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/openlitespeed-vhost.j2 >/usr/local/lsws/conf/vhosts/app.conf
+  else
+    rt_info "Generate Nginx configuration..."
+    j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/nginx.j2 >/etc/nginx/nginx.conf
+    j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/nginx-vhost.j2 >/etc/nginx/sites-available/default
 
-  rt_info "Generate PHP configuration..."
-  j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/www.j2 >/etc/php/current/fpm/pool.d/www.conf
+    rt_info "Generate PHP-FPM configuration..."
+    j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/php-fpm.j2 >/etc/php/current/fpm/pool.d/www.conf
+  fi
 
   touch $RUNTIME_BOOTED_FILE
 

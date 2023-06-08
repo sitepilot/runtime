@@ -8,7 +8,7 @@ fastcgi_cache_path {{ env('RUNTIME_WORKDIR') }}/cache levels=1:2 keys_zone=app:1
 server {
 	# Ports to listen on
 	listen 80 default_server;
-    listen [::]:80 default_server;
+  listen [::]:80 default_server;
 	listen 443 ssl http2 default_server;
 	listen [::]:443 ssl http2 default_server;
 

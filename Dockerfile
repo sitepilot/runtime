@@ -1,4 +1,7 @@
-FROM ubuntu:22.04
+ARG IMAGE='nginx'
+
+# ---- BASE IMAGE ---- #
+FROM ubuntu:22.04 AS base
 
 # Build args
 ARG PHP_VERSION='8.0'
@@ -18,16 +21,23 @@ ENV RUNTIME_SSH=false \
     S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0 \
     PHP_VERSION=${PHP_VERSION}
 
+# Install Packages Script
+ADD install-packages /usr/bin/install-packages
+
 #  Base Packages
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
+RUN install-packages \
     gnupg2 \
     ca-certificates \
     software-properties-common \
     gpg-agent \
     xz-utils \
     python3-pip \
-    openssh-server
+    openssh-server \
+    mariadb-client \
+    msmtp \
+    unzip \
+    nano \
+    curl
 
 # S6 Overlay
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
@@ -40,9 +50,12 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 RUN groupadd -r -g ${RUNTIME_GID} ${RUNTIME_GROUP} \
     && useradd --no-log-init -r -s /usr/bin/bash -m -d ${RUNTIME_WORKDIR} -u ${RUNTIME_UID} -g ${RUNTIME_GID} ${RUNTIME_USER}
 
-# Install Packages
-ADD install-packages /usr/bin/install-packages
-ADD packages/${PHP_VERSION}.txt /tmp/packages.txt
+# ---- NGINX IMAGE ---- #
+FROM base AS nginx
+
+ENV RUNTIME_SERVER=nginx
+
+ADD packages/php-${PHP_VERSION}.txt /tmp/packages.txt
 
 RUN add-apt-repository ppa:ondrej/php \
     && mkdir -p /etc/php/current \
@@ -50,7 +63,33 @@ RUN add-apt-repository ppa:ondrej/php \
     && ln -sf /usr/sbin/php-fpm${PHP_VERSION} /usr/sbin/php-fpm \
     && install-packages \
     $(cat /tmp/packages.txt) \
-    curl nano unzip msmtp nginx mariadb-client
+    nginx
+
+RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/nginx
+
+ENV RUNTIME_CMD="php-fpm -F"
+
+# ---- OPENLITESPEED IMAGE ---- #
+FROM base AS openlitespeed
+
+ENV RUNTIME_SERVER=openlitespeed
+
+ADD packages/lsphp-${PHP_VERSION}.txt /tmp/packages.txt
+
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 011AA62DEDA1F085 \
+    && curl -s http://rpms.litespeedtech.com/debian/enable_lst_debian_repo.sh | bash \
+    && install-packages \
+      openlitespeed \
+      $(cat /tmp/packages.txt) \
+    && mkdir -p /etc/php \
+    && export LSPHP_VERSION=$(echo $PHP_VERSION | sed s/[.]//g) \
+    && ln -sf /usr/local/lsws/lsphp$LSPHP_VERSION /etc/php/current  \
+    && ln -sf /usr/local/lsws/lsphp$LSPHP_VERSION/bin/php /usr/local/bin/php
+
+ENV RUNTIME_CMD="/usr/local/lsws/bin/openlitespeed -d"
+
+# ---- FINAL IMAGE ---- #
+FROM ${IMAGE} AS final
 
 # Install Composer
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
@@ -81,4 +120,4 @@ EXPOSE 80
 
 ENTRYPOINT ["/init"]
 
-CMD ["php-fpm", "-F"]
+CMD $RUNTIME_CMD

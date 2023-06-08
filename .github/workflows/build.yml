@@ -13,8 +13,9 @@ jobs:
       fail-fast: true
       matrix:
         php: [ '7.4', '8.0', '8.1' ]
+        server: [ 'nginx', 'openlitespeed' ]
 
-    name: Runtime ${{ matrix.php }}
+    name: Runtime ${{ matrix.server }} - ${{ matrix.php }}
 
     steps:
       - name: Checkout code
@@ -33,7 +34,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push Nginx image
         uses: docker/build-push-action@v4
         with:
           push: ${{ github.ref == 'refs/heads/main' }}
@@ -43,3 +44,17 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             PHP_VERSION=${{ matrix.php }}
+        if: matrix.server == nginx
+
+      - name: Build and push OpenLiteSpeed image
+        uses: docker/build-push-action@v4
+        with:
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/sitepilot/runtime:ols-${{ matrix.php }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            PHP_VERSION=${{ matrix.php }}
+            RUNTIME_SERVER=${{ matrix.server }}
+        if: matrix.server == openlitespeed

@@ -6,6 +6,29 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        IMAGE: 'nginx'
+        PHP_VERSION: '8.0'
+    environment:
+      RUNTIME_SSH: true
+      RUNTIME_USER: test-user
+      RUNTIME_GROUP: test-user
+      RUNTIME_UID: 1001
+      RUNTIME_GID: 1001
+      RUNTIME_WELCOME: true
+      RUNTIME_PASSWORD_FILE: /run/secrets/runtime_password
+    volumes:
+      - ./secrets:/run/secrets
+    ports:
+      - 9080:80
+      - 9443:443
+      - 9222:22
+
+  runtime-ols:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        IMAGE: 'openlitespeed'
         PHP_VERSION: '8.0'
     environment:
       RUNTIME_SSH: true
