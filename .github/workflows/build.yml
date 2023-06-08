@@ -44,7 +44,7 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             PHP_VERSION=${{ matrix.php }}
-        if: matrix.server == nginx
+        if: matrix.server == 'nginx'
 
       - name: Build and push OpenLiteSpeed image
         uses: docker/build-push-action@v4
@@ -57,4 +57,4 @@ jobs:
           build-args: |
             PHP_VERSION=${{ matrix.php }}
             RUNTIME_SERVER=${{ matrix.server }}
-        if: matrix.server == openlitespeed
+        if: matrix.server == 'openlitespeed'
