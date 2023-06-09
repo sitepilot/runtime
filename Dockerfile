@@ -5,7 +5,7 @@ FROM ubuntu:22.04 AS base
 
 # Build args
 ARG PHP_VERSION='8.0'
-ARG S6_OVERLAY_VERSION='3.1.4.2'
+ARG S6_OVERLAY_VERSION='3.1.5.0'
 
 # Environment
 ENV RUNTIME_SSH=false \
