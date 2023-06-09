@@ -205,34 +205,3 @@ ping.path = /-/ping
 ; response is formatted as text/plain with a 200 response code.
 ; Default Value: pong
 ;ping.response = pong
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Opinionated Settings
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; We believe everything should be secure by default. Some of these settings
-; can be changed with environment variables.
-
-; Security measures
-php_admin_value[open_basedir] = {{ env('PHP_OPEN_BASEDIR', '') }}
-php_admin_flag[session.cookie_secure] = true
-
-; Regional settings
-php_value[date.timezone] = {{ env('PHP_OPEN_BASEDIR', 'UTC') }}
-
-; Error reporting settings
-php_value[display_errors] = {{ env('PHP_DISPLAY_ERRORS', 'Off') }}
-php_value[display_startup_errors] = {{ env('PHP_DISPLAY_STARTUP_ERRORS', 'Off') }}
-php_value[error_reporting] = {{ env('PHP_ERROR_REPORTING', '22527') }}
-
-; Performance settings
-php_value[memory_limit] = {{ env('PHP_MEMORY_LIMIT', '256M') }}
-php_value[max_execution_time] = {{ env('PHP_MAX_EXECUTION_TIME', '99') }}
-php_value[max_input_vars] = {{ env('PHP_MAX_INPUT_VARS', '10000') }}
-
-; Upload settings
-php_value[post_max_size] = {{ env('PHP_POST_MAX_SIZE', '100M') }}
-php_value[upload_max_filesize] = {{ env('PHP_UPLOAD_MAX_FILE_SIZE', '100M') }}
-
-; Sendmail: Direct local emails to use msmtp
-php_admin_value[sendmail_path] = /usr/bin/msmtp -C /etc/msmtprc -t --read-envelope-from

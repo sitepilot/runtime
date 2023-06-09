@@ -130,6 +130,9 @@ rt_init() {
     rt_info "Generate OpenLiteSpeed configuration..."
     j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/openlitespeed.j2 >/usr/local/lsws/conf/httpd_config.conf
     j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/openlitespeed-vhost.j2 >/usr/local/lsws/conf/vhosts/app.conf
+
+    rt_info "Generate PHP configuration..."
+    j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/php.j2 >/etc/php/current/etc/php/8.0/mods-available/90-app.ini
   else
     rt_info "Generate Nginx configuration..."
     j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/nginx.j2 >/etc/nginx/nginx.conf
@@ -137,6 +140,9 @@ rt_init() {
 
     rt_info "Generate PHP-FPM configuration..."
     j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/php-fpm.j2 >/etc/php/current/fpm/pool.d/www.conf
+
+    rt_info "Generate PHP configuration..."
+    j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/php.j2 >/etc/php/current/fpm/conf.d/90-app.ini
   fi
 
   touch $RUNTIME_BOOTED_FILE

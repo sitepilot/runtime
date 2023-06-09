@@ -1,0 +1,16 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; App Settings
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+open_basedir={{ env('PHP_OPEN_BASEDIR', '') }}
+session.cookie_secure={{ env('PHP_SESSION_COOKIE_SECURE', 'UTC') }}
+date.timezone={{ env('PHP_OPEN_BASEDIR', 'UTC') }}
+display_errors={{ env('PHP_DISPLAY_ERRORS', 'Off') }}
+display_startup_errors={{ env('PHP_DISPLAY_STARTUP_ERRORS', 'Off') }}
+error_reporting={{ env('PHP_ERROR_REPORTING', '22527') }}
+memory_limit={{ env('PHP_MEMORY_LIMIT', '256M') }}
+max_execution_time={{ env('PHP_MAX_EXECUTION_TIME', '99') }}
+max_input_vars={{ env('PHP_MAX_INPUT_VARS', '10000') }}
+post_max_size={{ env('PHP_POST_MAX_SIZE', '100M') }}
+upload_max_filesize={{ env('PHP_UPLOAD_MAX_FILE_SIZE', '100M') }}
+sendmail_path=/usr/bin/msmtp -C /etc/msmtprc -t --read-envelope-from
