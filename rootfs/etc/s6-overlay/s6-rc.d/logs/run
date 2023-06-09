@@ -1,0 +1,2 @@
+#!/command/execlineb -P
+tail -n 0 -f /www/app/logs/php-error.log

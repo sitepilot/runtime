@@ -145,6 +145,9 @@ rt_init() {
     j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/php.j2 >/etc/php/current/fpm/conf.d/90-app.ini
   fi
 
+  touch /www/app/logs/php-error.log
+  chown $RUNTIME_USER /www/app/logs/php-error.log
+
   touch $RUNTIME_BOOTED_FILE
 
   rt_check "Initialization completed!"
