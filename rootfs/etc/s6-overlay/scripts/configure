@@ -93,11 +93,14 @@ rt_init() {
     $RUNTIME_WORKDIR/public \
     $RUNTIME_WORKDIR/certs
 
+  touch $RUNTIME_WORKDIR/logs/php-error.log
+
   chown $RUNTIME_USER:$RUNTIME_GROUP \
     $RUNTIME_WORKDIR \
     $RUNTIME_WORKDIR/logs \
     $RUNTIME_WORKDIR/public \
-    $RUNTIME_WORKDIR/certs
+    $RUNTIME_WORKDIR/certs \
+    $RUNTIME_WORKDIR/logs/php-error.log
 
   if [[ "$RUNTIME_RESET_PERMISSIONS" = true ]]; then
     rt_info "Reset file permissions..."
@@ -144,9 +147,6 @@ rt_init() {
     rt_info "Generate PHP configuration..."
     j2 --undefined --filters=/etc/runtime/filters.py /etc/runtime/templates/php.j2 >/etc/php/current/fpm/conf.d/90-app.ini
   fi
-
-  touch /www/app/logs/php-error.log
-  chown $RUNTIME_USER /www/app/logs/php-error.log
 
   touch $RUNTIME_BOOTED_FILE
 
