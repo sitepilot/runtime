@@ -8,6 +8,7 @@ date.timezone={{ env('PHP_OPEN_BASEDIR', 'UTC') }}
 display_errors={{ env('PHP_DISPLAY_ERRORS', 'Off') }}
 display_startup_errors={{ env('PHP_DISPLAY_STARTUP_ERRORS', 'Off') }}
 error_reporting={{ env('PHP_ERROR_REPORTING', '22527') }}
+error_log={{ env('RUNTIME_WORKDIR') }}/logs/php-error.log
 memory_limit={{ env('PHP_MEMORY_LIMIT', '256M') }}
 max_execution_time={{ env('PHP_MAX_EXECUTION_TIME', '99') }}
 max_input_vars={{ env('PHP_MAX_INPUT_VARS', '10000') }}

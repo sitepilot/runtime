@@ -11,18 +11,14 @@ mime                      conf/mime.properties
 showVersionNumber         0
 useIpInProxyHeader        1
 
-errorlog logs/error.log {
+errorlog /www/app/logs/ols-error.log {
   logLevel                WARN
   debugLevel              0
-  rollingSize             10M
+  rollingSize             0
   enableStderrLog         1
 }
 
-accesslog logs/access.log {
-  rollingSize             10M
-  keepDays                30
-  compressArchive         0
-}
+accesslog                 off
 
 indexFiles                index.php, index.html
 
