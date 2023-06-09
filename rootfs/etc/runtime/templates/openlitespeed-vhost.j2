@@ -1,4 +1,4 @@
-docRoot                   $VH_ROOT/public/{{ env('NGINX_DOCROOT', '') }}
+docRoot                   $VH_ROOT/public/{{ env('SRV_DOCROOT', '') }}
 
 errorlog $VH_ROOT/logs/error.log {
   useServer               0
@@ -17,4 +17,13 @@ accesslog $VH_ROOT/logs/access.log {
 rewrite  {
   enable                  1
   autoLoadHtaccess        1
+}
+
+context /-/ping/ {
+    location              /etc/runtime/ping/
+    allowBrowse           1
+    rewrite  {
+      enable              1
+      inherit             0
+    }
 }
